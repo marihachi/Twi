@@ -1,7 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Twi.Exceptions;
+using Twi.Objects;
 
 namespace Twi
 {
@@ -43,11 +48,30 @@ namespace Twi
 		public async Task<Uri> GetAuthorizationUrl()
 		{
 			var res = await Requester.Request(ConsumerKey, ConsumerSecret, null, null, HttpMethod.Get, RequestTokenUrl);
-			var parsed = Utility.ParseQueryString(await res.Content.ReadAsStringAsync());
-			RequestToken = parsed["oauth_token"];
-			RequestTokenSecret = parsed["oauth_token_secret"];
+			var resStr = await res.Content.ReadAsStringAsync();
 
-			return new Uri($"{AuthorizationUrl}?oauth_token={RequestToken}");
+			try
+			{
+				var parsed = Utility.ParseQueryString(resStr);
+				RequestToken = parsed["oauth_token"];
+				RequestTokenSecret = parsed["oauth_token_secret"];
+
+				return new Uri($"{AuthorizationUrl}?oauth_token={RequestToken}");
+			}
+			catch(Exception ex)
+			{
+				var t = JsonConvert.DeserializeObject<JToken>(resStr);
+				if (t["errors"] != null)
+				{
+					var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
+					throw new TwitterException(es, "認可URLの取得に失敗しました。", ex);
+				}
+				else
+				{
+					Debug.WriteLine($"GetAuthorizationUrlに失敗: {resStr}");
+					throw new Exception($"認可URLの取得に失敗しました。", ex);
+				}
+			}
 		}
 
 		/// <summary>
@@ -60,22 +84,50 @@ namespace Twi
 
 			var parameters = new Dictionary<string, string> { { "oauth_verifier", pin } };
 			var res = await Requester.Request(ConsumerKey, ConsumerSecret, RequestToken, RequestTokenSecret, HttpMethod.Post, AccessTokenUrl, parameters);
-			var parsed = Utility.ParseQueryString(await res.Content.ReadAsStringAsync());
+			var resStr = await res.Content.ReadAsStringAsync();
 
-			AccessToken = parsed["oauth_token"];
-			AccessTokenSecret = parsed["oauth_token_secret"];
+			try
+			{
+				var parsed = Utility.ParseQueryString(resStr);
+				AccessToken = parsed["oauth_token"];
+				AccessTokenSecret = parsed["oauth_token_secret"];
+			}
+			catch (Exception ex)
+			{
+				var t = JsonConvert.DeserializeObject<JToken>(resStr);
+				if (t["errors"] != null)
+				{
+					var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
+					throw new TwitterException(es, "AccessTokenの取得に失敗しました。", ex);
+				}
+				else
+				{
+					Debug.WriteLine($"Authorizeに失敗: {resStr}");
+					throw new Exception($"AccessTokenの取得に失敗しました。", ex);
+				}
+			}
 		}
 
 		/// <summary>
 		/// Twitter APIを呼び出します
 		/// </summary>
+		/// <exception cref="TwitterException" />
 		public async Task<string> Request(HttpMethod method, string url, IDictionary<string, string> parameters = null)
 		{
 			if (AccessToken == null || AccessTokenSecret == null)
-				throw new InvalidOperationException("アクセストークンが見つかりません");
+				throw new InvalidOperationException("AccessTokenが見つかりません");
 
 			var res = await Requester.Request(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, method, url, parameters);
-			return await res.Content.ReadAsStringAsync();
+			var resStr = await res.Content.ReadAsStringAsync();
+
+			var t = JsonConvert.DeserializeObject<JToken>(resStr);
+			if (t["errors"] != null)
+			{
+				var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
+				throw new TwitterException(es, "AccessTokenの取得に失敗しました。");
+			}
+
+			return resStr;
 		}
 	}
 }

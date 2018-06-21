@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using Twi.Exceptions;
 
 namespace Twi.Example
 {
@@ -41,7 +42,7 @@ namespace Twi.Example
 					MessageBox.Show("連携が完了しました", "Twi.Example", MessageBoxButtons.OK, MessageBoxIcon.Information);
 				}
 			}
-			catch (Exception ex)
+			catch (TwitterException ex)
 			{
 				MessageBox.Show(ex.Message, "Twi.Example", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
@@ -63,7 +64,7 @@ namespace Twi.Example
 				}
 				MessageBox.Show("投稿しました", "Twi.Example", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
-			catch (Exception ex)
+			catch (TwitterException ex)
 			{
 				MessageBox.Show($"投稿に失敗しました\r\n{ex.Message}\r\n{ex.StackTrace}", "Twi.Example", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
