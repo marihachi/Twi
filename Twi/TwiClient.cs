@@ -127,7 +127,7 @@ namespace Twi
 			if (t["errors"] != null)
 			{
 				var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
-				throw new TwitterException(es, "AccessTokenの取得に失敗しました。");
+				throw new TwitterException(es, "APIからエラーが返却されました。");
 			}
 
 			return resStr;
