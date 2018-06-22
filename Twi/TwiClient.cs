@@ -10,6 +10,9 @@ using Twi.Objects;
 
 namespace Twi
 {
+	/// <summary>
+	/// Twitter向けの認可リクエストやAPIリクエストの機能を提供します
+	/// </summary>
 	public class TwiClient
 	{
 		private const string RequestTokenUrl = "https://twitter.com/oauth/request_token";
@@ -26,7 +29,7 @@ namespace Twi
 		private OAuthRequester Requester { get; set; }
 
 		/// <summary>
-		/// 
+		/// TwiClient クラスの新しいインスタンスを初期化します
 		/// </summary>
 		/// <param name="http"></param>
 		/// <param name="consumerKey"></param>
