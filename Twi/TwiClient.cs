@@ -72,7 +72,7 @@ namespace Twi
 				else
 				{
 					Debug.WriteLine($"GetAuthorizationUrlに失敗: {resStr}");
-					throw new Exception($"認可URLの取得に失敗しました。", ex);
+					throw new Exception("認可URLの取得に失敗しました。", ex);
 				}
 			}
 		}
@@ -106,7 +106,7 @@ namespace Twi
 				else
 				{
 					Debug.WriteLine($"Authorizeに失敗: {resStr}");
-					throw new Exception($"AccessTokenの取得に失敗しました。", ex);
+					throw new Exception("AccessTokenの取得に失敗しました。", ex);
 				}
 			}
 		}
