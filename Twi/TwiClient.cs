@@ -143,7 +143,7 @@ namespace Twi
 		/// </summary>
 		/// <exception cref="InvalidOperationException" />
 		/// <exception cref="TwitterException" />
-		public async Task<string> UploadMedia(IEnumerable<byte> fileData, string fileName)
+		public async Task<Media> UploadMedia(IEnumerable<byte> fileData, string fileName)
 		{
 			if (AccessToken == null || AccessTokenSecret == null)
 				throw new InvalidOperationException("AccessTokenが見つかりません");
@@ -152,7 +152,7 @@ namespace Twi
 			var resStr = await res.Content.ReadAsStringAsync();
 			CheckError(resStr);
 
-			return resStr;
+			return JsonConvert.DeserializeObject<Media>(resStr);
 		}
 	}
 }
