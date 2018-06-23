@@ -111,9 +111,20 @@ namespace Twi
 			}
 		}
 
+		private void CheckError(string json)
+		{
+			var t = JsonConvert.DeserializeObject<JToken>(json);
+			if (t["errors"] != null)
+			{
+				var es = JsonConvert.DeserializeObject<TwitterErrors>(json);
+				throw new TwitterException(es, "APIからエラーが返却されました。");
+			}
+		}
+
 		/// <summary>
 		/// Twitter APIを呼び出します
 		/// </summary>
+		/// <exception cref="InvalidOperationException" />
 		/// <exception cref="TwitterException" />
 		public async Task<string> Request(HttpMethod method, string url, IDictionary<string, string> parameters = null)
 		{
@@ -122,13 +133,24 @@ namespace Twi
 
 			var res = await Requester.Request(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, method, url, parameters);
 			var resStr = await res.Content.ReadAsStringAsync();
+			CheckError(resStr);
 
-			var t = JsonConvert.DeserializeObject<JToken>(resStr);
-			if (t["errors"] != null)
-			{
-				var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
-				throw new TwitterException(es, "APIからエラーが返却されました。");
-			}
+			return resStr;
+		}
+
+		/// <summary>
+		/// Twitter にファイルをアップロードします
+		/// </summary>
+		/// <exception cref="InvalidOperationException" />
+		/// <exception cref="TwitterException" />
+		public async Task<string> UploadMedia(IEnumerable<byte> fileData, string fileName)
+		{
+			if (AccessToken == null || AccessTokenSecret == null)
+				throw new InvalidOperationException("AccessTokenが見つかりません");
+
+			var res = await Requester.UploadMedia(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, "https://upload.twitter.com/1.1/media/upload.json", fileData, fileName);
+			var resStr = await res.Content.ReadAsStringAsync();
+			CheckError(resStr);
 
 			return resStr;
 		}
