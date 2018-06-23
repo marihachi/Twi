@@ -148,7 +148,7 @@ namespace Twi
 			if (AccessToken == null || AccessTokenSecret == null)
 				throw new InvalidOperationException("AccessTokenが見つかりません");
 
-			var res = await Requester.UploadMedia(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, "https://upload.twitter.com/1.1/media/upload.json", fileData, fileName);
+			var res = await Requester.UploadMedia(ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret, fileData, fileName);
 			var resStr = await res.Content.ReadAsStringAsync();
 			CheckError(resStr);
 

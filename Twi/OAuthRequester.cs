@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -71,13 +70,15 @@ namespace Twi
 			return res;
 		}
 
-		public async Task<HttpResponseMessage> UploadMedia(string consumerKey, string consumerSecret, string token, string tokenSecret, string url, IEnumerable<byte> mediaData, string fileName)
+		public async Task<HttpResponseMessage> UploadMedia(string consumerKey, string consumerSecret, string token, string tokenSecret, IEnumerable<byte> mediaData, string fileName)
 		{
-			if (consumerKey == null || consumerSecret == null || url == null)
+			if (consumerKey == null || consumerSecret == null)
 			{
 				throw new ArgumentNullException();
 			}
 			Debug.WriteLine("== OAuthリクエスト 開始 ==");
+
+			var url = "https://upload.twitter.com/1.1/media/upload.json";
 
 			var req = new HttpRequestMessage(HttpMethod.Post, url);
 
