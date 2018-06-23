@@ -26,19 +26,6 @@ namespace Twi
 			Http = http;
 		}
 
-		private string UrlEncodeNormal(string source)
-		{
-			return WebUtility.UrlEncode(source).Replace("%20", "+");
-		}
-
-		private string BuildQueryStringNormal(IDictionary<string, string> parameters)
-		{
-			var pairs = from p in parameters select $"{UrlEncodeNormal(p.Key)}={UrlEncodeNormal(p.Value)}";
-			var queryString = string.Join("&", pairs);
-
-			return queryString;
-		}
-
 		/// <summary>
 		/// 
 		/// </summary>
