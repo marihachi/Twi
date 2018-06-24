@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <Version>1.0.0</Version>
+    <Authors>marihachi</Authors>
+    <Description>Twi is a minimaly Twitter API Library.</Description>
+    <Copyright>Copyright (c) 2018 Marihachi</Copyright>
+    <PackageLicenseUrl>https://github.com/marihachi/Twi/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/marihachi/Twi</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marihachi/Twi.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>twitter api library netstandard netframework minimal</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
