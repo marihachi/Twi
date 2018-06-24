@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Twi.Exceptions;
@@ -45,9 +46,21 @@ namespace Twi
 			AccessTokenSecret = accessTokenSecret;
 		}
 
+		private static Dictionary<string, string> ParseQueryString(string queryString)
+		{
+			return queryString.Split('&')
+				.Select(i => {
+					var kv = i.Split('=');
+					return new { Key = kv[0], Value = kv[1] };
+				})
+				.ToDictionary(i => i.Key, i => i.Value);
+		}
+
 		/// <summary>
 		/// 認可をリクエストし、認可URLを取得します
 		/// </summary>
+		/// <exception cref="TwitterException" />
+		/// <exception cref="Exception" />
 		public async Task<Uri> GetAuthorizationUrl()
 		{
 			var res = await Requester.Request(ConsumerKey, ConsumerSecret, null, null, HttpMethod.Get, RequestTokenUrl);
@@ -55,7 +68,7 @@ namespace Twi
 
 			try
 			{
-				var parsed = InternalUtil.ParseQueryString(resStr);
+				var parsed = ParseQueryString(resStr);
 				RequestToken = parsed["oauth_token"];
 				RequestTokenSecret = parsed["oauth_token_secret"];
 
@@ -80,6 +93,9 @@ namespace Twi
 		/// <summary>
 		/// PINコードを渡してアクセストークンをリクエストします
 		/// </summary>
+		/// <exception cref="InvalidOperationException" />
+		/// <exception cref="TwitterException" />
+		/// <exception cref="Exception" />
 		public async Task Authorize(string pin)
 		{
 			if (RequestToken == null || RequestTokenSecret == null)
@@ -91,7 +107,7 @@ namespace Twi
 
 			try
 			{
-				var parsed = InternalUtil.ParseQueryString(resStr);
+				var parsed = ParseQueryString(resStr);
 				AccessToken = parsed["oauth_token"];
 				AccessTokenSecret = parsed["oauth_token_secret"];
 			}
