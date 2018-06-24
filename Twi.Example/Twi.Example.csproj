@@ -71,7 +71,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\twi\Twi.csproj">
+    <ProjectReference Include="..\Twi\Twi.csproj">
       <Project>{bafef502-e82f-477b-a791-015b711eca63}</Project>
       <Name>Twi</Name>
     </ProjectReference>
