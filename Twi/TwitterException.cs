@@ -1,7 +1,6 @@
 ﻿using System;
-using Twi.Objects;
 
-namespace Twi.Exceptions
+namespace Twi
 {
 	public class TwitterException : Exception
 	{

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace Twi.Objects
+namespace Twi
 {
 	public class ErrorsObject
 	{
