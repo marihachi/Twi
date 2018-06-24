@@ -55,7 +55,7 @@ namespace Twi
 
 			try
 			{
-				var parsed = Utility.ParseQueryString(resStr);
+				var parsed = InternalUtil.ParseQueryString(resStr);
 				RequestToken = parsed["oauth_token"];
 				RequestTokenSecret = parsed["oauth_token_secret"];
 
@@ -66,7 +66,7 @@ namespace Twi
 				var t = JsonConvert.DeserializeObject<JToken>(resStr);
 				if (t["errors"] != null)
 				{
-					var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
+					var es = JsonConvert.DeserializeObject<ErrorsObject>(resStr);
 					throw new TwitterException(es, "認可URLの取得に失敗しました。", ex);
 				}
 				else
@@ -91,7 +91,7 @@ namespace Twi
 
 			try
 			{
-				var parsed = Utility.ParseQueryString(resStr);
+				var parsed = InternalUtil.ParseQueryString(resStr);
 				AccessToken = parsed["oauth_token"];
 				AccessTokenSecret = parsed["oauth_token_secret"];
 			}
@@ -100,7 +100,7 @@ namespace Twi
 				var t = JsonConvert.DeserializeObject<JToken>(resStr);
 				if (t["errors"] != null)
 				{
-					var es = JsonConvert.DeserializeObject<TwitterErrors>(resStr);
+					var es = JsonConvert.DeserializeObject<ErrorsObject>(resStr);
 					throw new TwitterException(es, "AccessTokenの取得に失敗しました。", ex);
 				}
 				else
@@ -116,7 +116,7 @@ namespace Twi
 			var t = JsonConvert.DeserializeObject<JToken>(json);
 			if (t["errors"] != null)
 			{
-				var es = JsonConvert.DeserializeObject<TwitterErrors>(json);
+				var es = JsonConvert.DeserializeObject<ErrorsObject>(json);
 				throw new TwitterException(es, "APIからエラーが返却されました。");
 			}
 		}
@@ -126,6 +126,7 @@ namespace Twi
 		/// </summary>
 		/// <exception cref="InvalidOperationException" />
 		/// <exception cref="TwitterException" />
+		/// <returns>JSONデータ</returns>
 		public async Task<string> Request(HttpMethod method, string url, IDictionary<string, string> parameters = null)
 		{
 			if (AccessToken == null || AccessTokenSecret == null)
@@ -143,7 +144,8 @@ namespace Twi
 		/// </summary>
 		/// <exception cref="InvalidOperationException" />
 		/// <exception cref="TwitterException" />
-		public async Task<Media> UploadMedia(IEnumerable<byte> fileData, string fileName)
+		/// <returns>Media ID</returns>
+		public async Task<long> UploadMedia(IEnumerable<byte> fileData, string fileName)
 		{
 			if (AccessToken == null || AccessTokenSecret == null)
 				throw new InvalidOperationException("AccessTokenが見つかりません");
@@ -152,7 +154,7 @@ namespace Twi
 			var resStr = await res.Content.ReadAsStringAsync();
 			CheckError(resStr);
 
-			return JsonConvert.DeserializeObject<Media>(resStr);
+			return JsonConvert.DeserializeObject<MediaObject>(resStr).Id;
 		}
 	}
 }

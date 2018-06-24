@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Twi
 {
-	internal static class Utility
+	internal static class InternalUtil
 	{
 		public static Dictionary<string, string> ParseQueryString(string queryString)
 		{
