@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,6 +12,7 @@ namespace Twi
 	internal class OAuthRequester
 	{
 		private Random Rand { get; set; }
+
 		private HttpClient Http { get; set; }
 
 		public OAuthRequester(HttpClient http)
@@ -43,7 +43,8 @@ namespace Twi
 		/// </summary>
 		private string BuildQueryString(IDictionary<string, string> parameters, string sep = "&", string bracket = "")
 		{
-			var pairs = from p in parameters select $"{UrlEncode(p.Key)}={bracket}{UrlEncode(p.Value)}{bracket}";
+			var pairs = parameters
+				.Select(p => $"{UrlEncode(p.Key)}={bracket}{UrlEncode(p.Value)}{bracket}");
 			var queryString = string.Join(sep, pairs);
 
 			return queryString;
@@ -81,7 +82,6 @@ namespace Twi
 		/// </summary>
 		private string GenerateSignature(string consumerSecret, string tokenSecret, HttpMethod httpMethod, string url, SortedDictionary<string, string> parameters)
 		{
-			Debug.WriteLine("== シグネチャ生成 開始 ==");
 			var uri = new Uri(url);
 			var nonQueryStringUrl = $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath}";
 			var queryStringParameters = BuildQueryString(parameters);
@@ -90,7 +90,6 @@ namespace Twi
 			// 注: dataに渡す URLは「?」以降のクエリ文字列は含めません
 			var data = httpMethod.ToString() + '&' + UrlEncode(nonQueryStringUrl) + '&' + UrlEncode(queryStringParameters);
 			var mac = GenerateMAC(key, data);
-			Debug.WriteLine("== シグネチャ生成 完了 ==");
 
 			return mac;
 		}
@@ -100,7 +99,6 @@ namespace Twi
 		/// </summary>
 		private AuthenticationHeaderValue BuildAuthorizationHeader(string consumerKey, string consumerSecret, string token, string tokenSecret, HttpMethod method, string url, IDictionary<string, string> parameters = null)
 		{
-			Debug.WriteLine("== Authorizationヘッダー組み立て 開始 ==");
 			var authParameters = new SortedDictionary<string, string> {
 				{ "oauth_consumer_key", consumerKey },
 				{ "oauth_timestamp", GenerateTimestamp() },
@@ -110,9 +108,7 @@ namespace Twi
 			};
 
 			if (!string.IsNullOrEmpty(token))
-			{
 				authParameters.Add("oauth_token", token);
-			}
 
 			if (parameters != null)
 			{
@@ -124,7 +120,6 @@ namespace Twi
 
 			authParameters.Add("oauth_signature", GenerateSignature(consumerSecret, tokenSecret, method, url, authParameters));
 			var authHeader = new AuthenticationHeaderValue("OAuth", BuildQueryString(authParameters, ",", "\""));
-			Debug.WriteLine("== Authorizationヘッダー組み立て 完了 ==");
 
 			return authHeader;
 		}
@@ -135,35 +130,33 @@ namespace Twi
 		public async Task<HttpResponseMessage> Request(string consumerKey, string consumerSecret, string token, string tokenSecret, HttpMethod method, string url, IDictionary<string, string> parameters = null)
 		{
 			if (consumerKey == null || consumerSecret == null || method == null || url == null)
-			{
 				throw new ArgumentNullException();
-			}
-			Debug.WriteLine("== OAuthリクエスト 開始 ==");
+
 			if (method == HttpMethod.Get && parameters != null)
-			{
 				url += $"?{BuildQueryString(parameters)}";
-			}
 
 			var req = new HttpRequestMessage(method, url);
 
-			req.Headers.ExpectContinue = false;
-
 			if (method == HttpMethod.Post && parameters != null)
-			{
 				req.Content = new FormUrlEncodedContent(parameters);
-			}
 
+			req.Headers.ExpectContinue = false;
 			req.Headers.Authorization = BuildAuthorizationHeader(consumerKey, consumerSecret, token, tokenSecret, method, url, parameters);
-
-			Debug.WriteLine("== リクエストヘッダ :");
-			Debug.WriteLine(req.Headers.ToString());
-			if (method == HttpMethod.Post)
-				Debug.WriteLine(await req.Content.ReadAsStringAsync());
-
 			var res = await Http.SendAsync(req);
-			Debug.WriteLine("== OAuthリクエスト 完了 ==");
 
 			return res;
+		}
+
+		private MultipartFormDataContent BuildMediaContent(IEnumerable<byte> mediaData, string fileName)
+		{
+			var MultipartContent = new MultipartFormDataContent();
+			var mediaContent = new ByteArrayContent(mediaData.ToArray());
+			mediaContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+			mediaContent.Headers.ContentDisposition.Name = "media";
+			mediaContent.Headers.ContentDisposition.FileName = fileName;
+			MultipartContent.Add(mediaContent);
+
+			return MultipartContent;
 		}
 
 		/// <summary>
@@ -172,33 +165,14 @@ namespace Twi
 		public async Task<HttpResponseMessage> UploadMedia(string consumerKey, string consumerSecret, string token, string tokenSecret, IEnumerable<byte> mediaData, string fileName)
 		{
 			if (consumerKey == null || consumerSecret == null)
-			{
 				throw new ArgumentNullException();
-			}
-			Debug.WriteLine("== OAuthリクエスト 開始 ==");
 
 			var url = "https://upload.twitter.com/1.1/media/upload.json";
-
 			var req = new HttpRequestMessage(HttpMethod.Post, url);
-
+			req.Content = BuildMediaContent(mediaData, fileName);
 			req.Headers.ExpectContinue = false;
-
-			var MultipartContent = new MultipartFormDataContent();
-			var content = new ByteArrayContent(mediaData.ToArray());
-			content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
-			content.Headers.ContentDisposition.Name = "media";
-			content.Headers.ContentDisposition.FileName = fileName;
-			MultipartContent.Add(content);
-			req.Content = MultipartContent;
-
 			req.Headers.Authorization = BuildAuthorizationHeader(consumerKey, consumerSecret, token, tokenSecret, HttpMethod.Post, url);
-
-			Debug.WriteLine("== リクエストヘッダ :");
-			Debug.WriteLine(req.Headers.ToString());
-			Debug.WriteLine(await req.Content.ReadAsStringAsync());
-
 			var res = await Http.SendAsync(req);
-			Debug.WriteLine("== OAuthリクエスト 完了 ==");
 
 			return res;
 		}
